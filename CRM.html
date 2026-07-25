@@ -1,1 +1,1216 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Relationship Management - CRM 2026</title> 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    
+    <style>
+        :root { --primary: #0d1253; --secondary: #3498db; --bg: #f4f7f6; --accent: #2ecc71; --warning: #e67e22; }
+        body, html { margin: 0; padding: 0; height: 100vh; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 16px; }
 
+        /* --- تصميم الوضع الليلي המريح (أزرق داكن) --- */
+        body.dark-theme { --bg: #070a24; --primary: #e0e6ed; color: #d1d5eb; }
+        body.dark-theme .card, body.dark-theme .header, body.dark-theme #single-month-ui, body.dark-theme #comparison-month-ui { background: #0d133f; border: 1px solid #1a237e; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        body.dark-theme select, body.dark-theme input, body.dark-theme .chart-controls button { background: #151b54; color: #e0e6ed; border: 1px solid #2c3e50; }
+        body.dark-theme .chart-controls button:hover { background: #1e2775; }
+        body.dark-theme .table-main-title { background: #11184b !important; color: #fff !important; border-bottom: 3px solid var(--secondary) !important; }
+        body.dark-theme .column-headers th { background: #0a0e33 !important; color: #a5b1c2 !important; border-bottom: 2px solid #1a237e !important; }
+        body.dark-theme td { border-bottom: 1px solid #151b54 !important; color: #c8d6e5 !important; }
+        body.dark-theme tr:nth-child(even) { background-color: rgba(255, 255, 255, 0.02) !important; }
+        body.dark-theme tr:hover { background-color: rgba(52, 152, 219, 0.15) !important; }
+        body.dark-theme #color-customizer { background: #0a0e33; border-color: #2c3e50; }
+
+        /* ستايل الشاشة المنبثقة للوضع الليلي */
+        .popup-container { width: 95%; height: 95%; background: white; border-radius: 15px; padding: 1.25rem; display: flex; flex-direction: column; box-sizing: border-box; position: relative; color: #333; transition: background 0.3s; }
+        .popup-panel { display: flex; gap: 0.625rem; margin-bottom: 0.625rem; background: #f8f9fa; padding: 0.625rem; border-radius: 0.5rem; flex-shrink: 0; }
+        .popup-controls-row { display: flex; justify-content: center; gap: 0.3rem; margin-bottom: 0.625rem; flex-shrink: 0; }
+        .popup-controls-row button { padding: 0.3rem 0.9rem; border-radius: 1rem; border: 1px solid #ddd; cursor: pointer; background: #fff; font-size: 0.9rem; }
+        #popup-table-wrapper { flex: 1; overflow-y: auto; border: 1px solid #eee; border-radius: 0.5rem; margin-bottom: 0.625rem; }
+        #popup-chart-wrapper { flex: 1.2; position: relative; min-height: 200px; display: none; }
+        
+        body.dark-theme .popup-container { background: #0d133f; color: #d1d5eb; border: 1px solid #1a237e; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        body.dark-theme .popup-panel { background: #11184b; }
+        body.dark-theme .popup-controls-row button { background: #151b54; color: #e0e6ed; border-color: #2c3e50; }
+        body.dark-theme .popup-controls-row button:hover { background: #1e2775; }
+        body.dark-theme #popup-table-wrapper { border-color: #1a237e; }
+
+        /* --- صفحة تسجيل الدخول --- */
+        #login-page { height: 100vh; display: flex; justify-content: center; align-items: center; background: linear-gradient(rgba(13, 18, 83, 0.75), rgba(13, 18, 83, 0.75)), url('https://images.unsplash.com/photo-1557804506-669a67965ba0?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80'); background-size: cover; background-position: center; position: absolute; width: 100%; z-index: 10000; }
+        .login-card { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(20px); padding: 2.8rem; border-radius: 1.5rem; width: 24rem; box-shadow: 0 15px 35px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.2); text-align: center; color: white; animation: fadeInDown 0.8s ease-out; }
+        .login-card h2 { margin-bottom: 1.8rem; font-size: 2rem; letter-spacing: 1px; }
+        .login-card input { width: 100%; padding: 0.8rem; margin-bottom: 1.2rem; border-radius: 0.75rem; border: none; outline: none; font-size: 1.1rem; box-sizing: border-box; background: rgba(255,255,255,0.9); color: #333; }
+        .remember-me { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; font-size: 1rem; cursor: pointer; justify-content: center; }
+        .login-btn { width: 100%; padding: 0.8rem; background: var(--secondary); color: white; border: none; border-radius: 0.75rem; font-weight: bold; font-size: 1.2rem; cursor: pointer; transition: 0.4s; }
+        .login-btn:hover { background: #2980b9; transform: translateY(-3px); }
+
+        /* --- لوحة التحكم والتصميم المدمج (Compact) --- */
+        #dashboard { display: none; background: var(--bg); height: 100vh; overflow: hidden; }
+        .wrapper { display: flex; height: 100vh; }
+        
+        .sidebar { width: 16rem; background: #0d1253; color: white; height: 100vh; padding: 1rem; flex-shrink: 0; box-shadow: 4px 0 10px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow-y: auto; box-sizing: border-box; }
+        .nav-item { padding: 0.6rem 0.9rem; cursor: pointer; border-radius: 0.5rem; margin-bottom: 0.3rem; list-style: none; transition: 0.3s; background: rgba(255,255,255,0.03); font-size: 1rem; }
+        .nav-item:hover { background: rgba(255,255,255,0.08); transform: translateX(-3px); }
+        .nav-item.active { background: var(--secondary); border-right: 4px solid #fff; font-weight: bold; }
+
+        .main { flex-grow: 1; display: flex; flex-direction: column; padding: 0.6rem 1rem; height: 100vh; box-sizing: border-box; overflow: hidden; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; background: white; padding: 0.6rem 1.2rem; border-radius: 0.75rem; box-shadow: 0 2px 5px rgba(0,0,0,0.03); flex-shrink: 0; }
+        .header h1 { font-size: 1.4rem; color: var(--primary); margin: 0; }
+
+        .card { background: white; padding: 1rem; border-radius: 0.75rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 0.6rem; display: flex; flex-direction: column; min-height: 0; }
+        
+        #table-card { flex: 0.8; }
+        .table-container { overflow-y: auto; flex-grow: 1; border-radius: 0.5rem; border: 1px solid #eee; }
+        
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        .table-main-title { background: #f1f4f9; color: var(--primary); text-align: center; font-weight: 800; font-size: 1.2rem; padding: 0.6rem; position: sticky; top: 0; z-index: 10; }
+        .column-headers th { background: #ffffff; color: #666; padding: 0.6rem; font-size: 1rem; position: sticky; top: 2.5rem; z-index: 10; box-shadow: 0 2px 2px -1px rgba(0,0,0,0.1); }
+        td { padding: 0.5rem 0.6rem; border-bottom: 1px solid #f1f1f1; font-size: 1rem; }
+        .col-m { width: 3.75rem; text-align: center; font-weight: bold; color: #999; }
+        .col-desc { width: 45%; text-align: right; font-weight: 600; }
+        .col-data { text-align: center; font-weight: 800; color: var(--secondary); font-size: 1.1rem; } 
+
+        #chart-card { flex: 1.2; }
+        .chart-container { flex-grow: 1; position: relative; height: 100%; width: 100%; min-height: 200px; }
+        
+        .chart-controls { display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-end; }
+        .chart-controls button { background: #fff; border: 1px solid #ddd; padding: 0.3rem 0.9rem; border-radius: 1rem; cursor: pointer; font-size: 1rem; transition: 0.2s; }
+        
+        #color-customizer { display: flex; gap: 0.3rem; flex-wrap: wrap; padding: 0.3rem; border-radius: 0.5rem; border: 1px dashed #ccc; font-size: 0.8rem; }
+        .color-select { padding: 0.1rem; border-radius: 0.2rem; font-size: 0.6rem; }
+
+        select { font-size: 1rem !important; font-weight: bold !important; padding: 0.5rem; }
+        #loading { text-align: center; display: none; color: var(--secondary); font-weight: bold; padding: 0.6rem; font-size: 1.1rem; }
+
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        .column-headers th { background: #ffffff; color: #555; padding: 0.6rem; font-size: 1rem; position: sticky; top: 2.5rem; z-index: 10; box-shadow: 0 2px 2px -1px rgba(0,0,0,0.1); }
+
+/* 1. تعديل حاوية الـ main لإضافة هامش سفلي أمان يمنع اختفاء البيانات خلف الفوتر */
+.main { 
+    flex-grow: 1; 
+    display: flex; 
+    flex-direction: column; 
+    padding: 0.6rem 1rem 42px 1rem; /* تم إضافة 42px في الأسفل كحد مانع */
+    height: 100vh; 
+    box-sizing: border-box; 
+    overflow: hidden; 
+}
+
+/* 2. تعديل الفوتر ليكون بكامل العرض وبسمك أقل (سمك نحيف واحترافي) */
+footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 999999;
+    
+    /* تأثير زجاجي شفاف وضبابي */
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(255, 255, 255, 0.25);
+    
+    padding: 6px 24px; /* تم تقليل السمك من 12px إلى 6px ليكون نحيفاً */
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06);
+    box-sizing: border-box;
+    direction: rtl;
+}
+
+.footer-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    white-space: nowrap;
+}
+
+.footer-logo {
+    font-size: 0.85rem; /* تقليل حجم الخط قليلاً ليتناسق مع السمك الجديد */
+    font-weight: 800;
+    color: var(--primary);
+    letter-spacing: 0.5px;
+}
+
+.footer-divider {
+    color: rgba(0, 0, 0, 0.15);
+    font-size: 0.85rem;
+}
+
+.footer-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #2ecc71;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 0.85rem;
+    transition: transform 0.2s ease;
+}
+
+.footer-link:hover {
+    transform: scale(1.02);
+}
+
+/* التوافق التام مع الوضع الليلي للأبلكيشن */
+body.dark-theme footer {
+    background: rgba(13, 19, 63, 0.6);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
+}
+
+body.dark-theme footer .footer-logo { color: #fff; }
+body.dark-theme footer .footer-divider { color: rgba(255, 255, 255, 0.2); }
+body.dark-theme footer:hover { background: rgba(13, 19, 63, 0.75); border-color: var(--secondary); }
+
+/* --- شبكة العرض الديناميكية للشاشات المتعددة (مستقلة بالكامل) --- */
+.popup-grid {
+    display: grid;
+    gap: 1rem;
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+    padding-right: 0.5rem;
+}
+
+/* توزيع الشاشات بناءً على العدد */
+.popup-grid.grid-1 { grid-template-columns: 1fr; }
+.popup-grid.grid-2 { grid-template-columns: 1fr 1fr; }
+.popup-grid.grid-3 { grid-template-columns: 1fr 1fr; } 
+.popup-grid.grid-3 .report-pane:nth-child(3) { grid-column: 1 / span 2; } /* الشاشة الثالثة تأخذ العرض كامل بالأسفل */
+.popup-grid.grid-4 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+
+/* تصميم الشاشة المستقلة (Pane) */
+.report-pane {
+    display: flex;
+    flex-direction: column;
+    border: 2px solid #e0e6ed;
+    border-radius: 0.75rem;
+    padding: 0.6rem;
+    background: #fff;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    overflow: hidden; /* لمنع أي خروج للمحتوى */
+}
+body.dark-theme .report-pane { background: #0d133f; border-color: #1a237e; }
+
+/* أدوات التحكم الخاصة بكل شاشة مستقلة */
+/* =========================================================
+   1. جعل الشاشات تملأ المساحة بالكامل (بدون مساحات بيضاء)
+   ========================================================= */
+
+/* جعل شبكة العرض تتمدد بكامل الارتفاع */
+.popup-grid {
+    display: grid;
+    gap: 1rem;
+    flex: 1; /* تتمدد لأخذ باقي مساحة النافذة */
+    overflow-y: auto;
+    min-height: 0;
+    padding-right: 0.5rem;
+    align-items: stretch; /* تجبر الشاشات على التمدد للأسفل */
+}
+
+/* الشاشة الفردية */
+.report-pane {
+    display: flex;
+    flex-direction: column;
+    border: 2px solid #e0e6ed;
+    border-radius: 0.75rem;
+    padding: 0.6rem;
+    background: #fff;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    height: 100%; /* تملأ ارتفاع الخلية بالكامل */
+    box-sizing: border-box;
+}
+body.dark-theme .report-pane { background: #0d133f; border-color: #1a237e; }
+
+.pane-body {
+    flex: 1; /* يأخذ كل المساحة المتبقية داخل الشاشة */
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    min-height: 0; /* هام جداً لمنع المحتوى من تجاوز الشاشة */
+}
+
+/* =========================================================
+   2. توزيع المساحات في الشاشة الواحدة (Grid-1)
+   ========================================================= */
+.popup-grid.grid-1 .pane-body {
+    display: flex !important;
+    flex-direction: column !important;
+}
+.popup-grid.grid-1 .pane-table-wrapper {
+    flex: 1 !important; /* يتمدد لملء النصف العلوي */
+    max-height: 50% !important; 
+    overflow-y: auto;
+}
+.popup-grid.grid-1 .pane-chart-wrapper {
+    flex: 1 !important; /* يتمدد لملء النصف السفلي بالكامل */
+    min-height: 0 !important;
+}
+
+/* =========================================================
+   3. توزيع المساحات في الشاشات المتعددة (تقسيم بالطول)
+   ========================================================= */
+.popup-grid:not(.grid-1) .pane-body {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    grid-template-rows: auto 1fr !important;
+    height: 100%; 
+}
+.popup-grid:not(.grid-1) .pane-table-wrapper {
+    grid-column: 1 / 2 !important; 
+    grid-row: 1 / 3 !important; 
+    height: 100% !important; /* تملأ الارتفاع بالكامل */
+    max-height: none !important;
+    margin: 0;
+}
+.popup-grid:not(.grid-1) .popup-controls-row {
+    grid-column: 2 / 3 !important; 
+    grid-row: 1 / 2 !important; 
+    margin: 0 !important;
+    justify-content: center;
+}
+.popup-grid:not(.grid-1) .pane-chart-wrapper {
+    grid-column: 2 / 3 !important; 
+    grid-row: 2 / 3 !important; 
+    height: 100% !important; /* تملأ المساحة السفلية بالكامل */
+    min-height: 0 !important;
+}
+
+/* إجبار الرسم البياني على التمدد داخل حاويته */
+.pane-chart-wrapper canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* =========================================================
+   4. التصميم الاحترافي التفاعلي للقوائم والأزرار
+   ========================================================= */
+.pane-independent-controls {
+    display: flex;
+    gap: 0.6rem;
+    margin-bottom: 0.5rem;
+    align-items: center;
+    background: #f1f4f9;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    flex-wrap: wrap;
+    border: 1px solid #e0e6ed;
+}
+body.dark-theme .pane-independent-controls { background: #11184b; border-color: #2c3e50; }
+
+/* حل مشكلة الأسهم المتكررة وتنسيق الألوان */
+.pane-independent-controls select {
+    flex: 1;
+    min-width: 80px;
+    -webkit-appearance: none !important; /* إجبار المتصفح على إخفاء السهم */
+    -moz-appearance: none !important;
+    appearance: none !important;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%233498db' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") !important;
+    background-repeat: no-repeat !important;
+    background-position: left 0.5rem center !important;
+    background-size: 1.2rem !important;
+    background-color: #ffffff !important;
+    border: 2px solid #ced4da;
+    border-radius: 0.5rem;
+    padding: 0.4rem 0.5rem 0.4rem 2rem;
+    font-weight: 700;
+    color: #2c3e50;
+    cursor: pointer;
+}
+
+/* تنسيق قائمة اختيار نظام العرض في الوضع الليلي */
+body.dark-theme #sum-mode {
+    background-color: #151b54 !important;
+    color: #e0e6ed !important;
+    border: 1px solid #2c3e50 !important;
+}
+
+/* تنسيق حاوية اختيار النظام في الوضع الليلي */
+body.dark-theme .popup-container > div:nth-child(2) {
+    background: #0d133f !important;
+    border-color: #1a237e !important;
+}
+
+body.dark-theme .popup-container > div:nth-child(2) label {
+    color: #a5b1c2 !important;
+}
+
+.pane-independent-controls select:hover {
+    border-color: #3498db;
+    box-shadow: 0 4px 8px rgba(52, 152, 219, 0.15);
+}
+.pane-independent-controls select:focus {
+    outline: none;
+    border-color: #2ecc71;
+    box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.2);
+}
+
+/* الوضع الليلي للقوائم */
+body.dark-theme .pane-independent-controls select {
+    background-color: #151b54 !important;
+    color: #e0e6ed !important;
+    border-color: #2c3e50 !important;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e0e6ed' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") !important;
+}
+
+/* زر التجميع الأخضر (تفاعلي وحيوي) */
+.pane-independent-controls button {
+    background: linear-gradient(135deg, #2ecc71, #27ae60) !important;
+    color: white !important;
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.4rem 1rem;
+    font-size: 0.95rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* تأثير ارتداد عند الضغط */
+    box-shadow: 0 4px 10px rgba(46, 204, 113, 0.3);
+}
+
+.pane-independent-controls button:hover {
+    transform: translateY(-2px); /* يرتفع لأعلى عند الوقوف عليه */
+    box-shadow: 0 6px 15px rgba(46, 204, 113, 0.4);
+    background: linear-gradient(135deg, #27ae60, #219653) !important;
+}
+
+.pane-independent-controls button:active {
+    transform: scale(0.92) translateY(0); /* يصغر وينضغط لأسفل عند النقر الفعلي */
+    box-shadow: 0 2px 5px rgba(46, 204, 113, 0.3);
+}
+
+</style>
+</head>
+<body>
+
+<body onkeydown="handleGlobalKeyPress(event)"></body>
+<div id="login-page">
+    <div class="login-card">
+        <h2>تسجيل دخول CRM</h2>
+        <input type="text" id="username" placeholder="اسم المستخدم">
+        <input type="password" id="password" placeholder="كلمة المرور">
+        <label class="remember-me"><input type="checkbox" id="remember" style="width: auto; margin: 0;"> حفظ بيانات الدخول</label>
+        <button class="login-btn" onclick="checkLogin()">دخول آمن</button>
+        <p id="login-error" style="color: #ff7675; margin-top: 1rem; display: none; font-weight: bold;">⚠️ خطأ في البيانات!</p>
+    </div>
+</div>
+
+<div id="dashboard">
+    <div class="wrapper">
+        <div class="sidebar">
+            <div style="margin-bottom: 0.6rem;">
+                <button id="mode-toggle-btn" onclick="toggleComparisonMode()" style="width: 100%; padding: 0.6rem; background: var(--accent); color: white; border: none; border-radius: 0.5rem; font-weight: bold; cursor: pointer; font-size: 1rem;">🔄 وضع المقارنة</button>
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <button onclick="openSummaryPopup()" style="width: 100%; padding: 0.6rem; background: #1426cc; color: white; border: none; border-radius: 0.5rem; font-weight: bold; cursor: pointer; font-size: 1rem;">📊 التقارير المجمعة</button>
+            </div>
+            
+            <div id="single-month-ui">
+                <select id="month-selector" onchange="updateCurrentMonth()" style="width: 100%; border-radius: 0.5rem; border: none; outline: none; cursor: pointer;">
+                    <option value="Jan">يناير</option><option value="Feb">فبراير</option><option value="Mar">مارس</option>
+                    <option value="Apr">أبريل</option><option value="May">مايو</option><option value="Jun">يونيو</option>
+                    <option value="Jul">يوليو</option><option value="Aug">أغسطس</option><option value="Sep">سبتمبر</option>
+                    <option value="Oct">أكتوبر</option><option value="Nov">نوفمبر</option><option value="Dec">ديسمبر</option>
+                </select>
+            </div>
+
+            <div id="comparison-month-ui" style="display: none; background: rgba(255,255,255,0.05); padding: 0.6rem; border-radius: 0.5rem; margin-bottom: 0.6rem;">
+                <div style="display: flex; flex-direction: column; gap: 0.3rem; max-height: 12.5rem; overflow-y: auto;">
+                    <script>
+                        for(let i=1; i<=12; i++) {
+                            document.write(`<select id="comp-m${i}" onchange="triggerComparison()" style="width:100%; border-radius:0.3rem;"><option value="">-- شهر ${i} --</option><option value="Jan">يناير</option><option value="Feb">فبراير</option><option value="Mar">مارس</option><option value="Apr">أبريل</option><option value="May">مايو</option><option value="Jun">يونيو</option><option value="Jul">يوليو</option><option value="Aug">أغسطس</option><option value="Sep">سبتمبر</option><option value="Oct">أكتوبر</option><option value="Nov">نوفمبر</option><option value="Dec">ديسمبر</option></select>`);
+                        }
+                    </script>
+                </div>
+            </div>
+
+            <hr style="border: 0.5px solid rgba(255,255,255,0.1); margin: 0.6rem 0;">
+
+            <li class="nav-item" onclick="loadData(this, 'Sales', 'line')">📈 تحميلات القطاعات</li>
+            <li class="nav-item" onclick="loadData(this, 'CallCenter', 'bar')">📞 Call Center</li>
+            <li class="nav-item" onclick="loadData(this, 'Satisfaction', 'pie')">😊 مدي رضاء العميل</li>
+            <li class="nav-item" onclick="loadData(this, 'Returns', 'line')">🔄 المرتجعات</li>
+            <li class="nav-item" onclick="loadData(this, 'Service', 'bar')">🛠 Service Level</li>
+            <li class="nav-item" onclick="loadData(this, 'Orders', 'pie')">📦 طلبيات تم تفعيلها</li>
+            <li class="nav-item" onclick="loadData(this, 'MostComplaints', 'bar')">⚠️ الأكثر شكوى</li>
+            <li class="nav-item" onclick="loadData(this, 'Complaints', 'line')">📋 Complaints</li>
+            <li class="nav-item" onclick="loadData(this, 'Target', 'bar')">🎯 المحقق والمستهدف</li>
+        </div>
+
+        <div class="main">
+            <div class="header">
+                <h1 id="welcome-msg">📌 أهلاً بك</h1>
+                
+                <div style="display: flex; gap: 0.6rem; align-items: center;">
+                    <div style="background: #f1f4f9; padding: 0.2rem 0.5rem; border-radius: 0.5rem; display: flex; gap: 0.3rem;">
+                        <button title="تكبير" onclick="adjustTextSize(1)" style="border:none; background:#3498db; color:white; padding:0.2rem 0.6rem; border-radius:0.25rem; cursor:pointer; font-weight:bold; font-size:1rem;">A+</button>
+                        <button title="تصغير" onclick="adjustTextSize(-1)" style="border:none; background:#95a5a6; color:white; padding:0.2rem 0.6rem; border-radius:0.25rem; cursor:pointer; font-weight:bold; font-size:1rem;">A-</button>
+                    </div>
+                    <button onclick="toggleTheme()" style="border:none; background:#1abc9c; color:white; padding:0.5rem 1rem; border-radius:0.5rem; cursor:pointer; font-weight:bold; font-size:1rem;">🌓 وضع الإضاءة</button>
+                </div>
+
+                <div style="display: flex; gap: 0.6rem; align-items: center;">
+                    <div id="mode-indicator" style="background: #eee; padding: 0.3rem 0.6rem; border-radius: 0.75rem; font-size: 0.8rem; font-weight: bold; color: #666;">عرض شهر واحد</div>
+                    <button onclick="logout()" style="background:#e74c3c; color:white; border:none; padding:0.5rem 1rem; border-radius:0.5rem; cursor:pointer; font-weight:bold; font-size:1rem;">خروج</button>
+                </div>
+            </div>
+
+            <div id="table-card" class="card">
+                <div id="loading">🔄 جاري مزامنة البيانات...</div>
+                <div class="table-container">
+                    <table>
+                        <thead id="table-head"></thead>
+                        <tbody id="table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="chart-card" class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem;">
+                    <h3 id="chart-title" style="margin:0; font-size: 1.2rem; color: var(--primary);">التحليل البياني</h3>
+                    <div class="chart-controls">
+                        <div style="display: flex; gap: 0.3rem;">
+                            <button onclick="changeChartType('line')">📈</button>
+                            <button onclick="changeChartType('line', true)">🏔️</button>
+                            <button onclick="changeChartType('bar')">📊</button>
+                            <button onclick="changeChartType('horizontalBar')">📉</button>
+                            <button onclick="changeChartType('pie')">🍕</button>
+                            <button onclick="changeChartType('polarArea')">🧭</button>
+                            <button onclick="changeChartType('radar')">🕸️</button>
+                        </div>
+                        <div id="color-customizer"></div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="myChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="summary-popup" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:9999; justify-content:center; align-items:center;">
+    <div class="popup-container" style="display: flex; flex-direction: column;">
+        <span onclick="document.getElementById('summary-popup').style.display='none'" style="position:absolute; top:0.6rem; left:1.2rem; font-size:2rem; cursor:pointer; color:#e74c3c; font-weight:bold; z-index:10;">&times;</span>
+        <h2 style="text-align:center; margin:0 0 0.6rem 0; color:var(--primary); font-size:1.3rem;">📊 منصة التحليل التراكمي والمقارنات المتقدمة</h2>
+        
+        <div style="text-align: center; margin-bottom: 1rem; background: #444663; padding: 0.6rem; border-radius: 0.5rem; border: 1px solid #aca3a3;">
+            <label style="font-weight: bold; color: var(--primary); font-size: 1.1rem; margin-left: 0.5rem;">اختر نظام العرض:</label>
+            <select id="sum-mode" onchange="changePopupMode()" style="padding: 0.4rem 1rem; border-radius: 0.3rem; border: 1px solid #3498db; font-weight: bold; font-size: 1rem; background: #fff; cursor: pointer;">
+                <option value="1">التحليل المستقل</option>
+                <option value="2">شاشتين</option>
+                <option value="3">3 شاشات</option>
+                <option value="4">4 شاشات</option>
+            </select>
+        </div>
+
+        <div id="multi-panes-container" class="popup-grid grid-1">
+            </div>
+    </div>
+</div>
+        <div id="popup-chart-controls" class="popup-controls-row" style="display:none;">
+            <button onclick="changePopupChartType('line')">📈 خطي</button>
+            <button onclick="changePopupChartType('line', true)">🏔️ مساحي</button>
+            <button onclick="changePopupChartType('bar')">📊 عمودي</button>
+            <button onclick="changePopupChartType('horizontalBar')">📉 أفقي</button>
+            <button onclick="changePopupChartType('pie')">🍕 دائري</button>
+            <button onclick="changePopupChartType('polarArea')">🧭 قطبي</button>
+            <button onclick="changePopupChartType('radar')">🕸️ عنكبوتي</button>
+        </div>
+
+        <div id="popup-chart-wrapper">
+            <canvas id="popupChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<footer>
+    <div class="footer-content">
+      <span class="footer-logo">MSH_TECH</span>
+      <span class="footer-divider">|</span>
+      <a href="https://wa.me/201028571485" target="_blank" class="footer-link">
+        <i class="fa-brands fa-whatsapp"></i> M_Shaaban © 2026
+      </a>
+    </div>
+</footer>
+
+<script>
+    Chart.register(ChartDataLabels);
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbxWx6ozerRxdadxxAaLMt0xzfXss4lhxR8r3cYvUb-Wie17BLjk7LlZ0uYbjXVjWlxJZA/exec';
+    
+    const users = { "محمد شعبان": "251991", "ربيع سعيد": "123", "محمد سالم": "123","رمضان ابو القاسم": "123", "الامل الشريف": "123" };
+    const fixedPalette = [
+        { name: "Blue", color: "#3498db" }, { name: "Red", color: "#e74c3c" },
+        { name: "Green", color: "#2ecc71" }, { name: "Orange", color: "#f39c12" },
+        { name: "Purple", color: "#9b59b6" }, { name: "Teal", color: "#1abc9c" },
+        { name: "Navy", color: "#34495e" }, { name: "Pink", color: "#fd79a8" },
+        { name: "Yellow", color: "#f1c40f" }, { name: "Gray", color: "#95a5a6" }
+    ];
+
+    let isComparisonMode = false;
+    let savedColors = JSON.parse(localStorage.getItem('crm_saved_colors')) || {};
+    let currentRangeName = "Sales";
+    let myChart, currentData = null, currentCompData = null, currentLabel = "", currentChartType = 'line';
+    let isAreaEnabled = false;
+    let specificOptions = { indexAxis: 'x' };
+    
+    // متغيرات النافذة المنبثقة
+    let popupChartInstance;
+    let lastPopupData = null;
+    let lastPopupRange = null;
+    let popupChartType = 'bar';
+    let popupAreaEnabled = false;
+    let popupSpecificOptions = { indexAxis: 'x' };
+
+    // متغير حجم الخط المعزز بالـ rem ليعمل على كل الأجزاء
+    let currentBaseSize = 16; 
+
+    function handleGlobalKeyPress(e) {
+        // لو الضغطة هي Enter وصفحة تسجيل الدخول لسه معروضة، هينفذ الدخول فوراً
+        if (e.key === 'Enter' && document.getElementById('login-page').style.display !== 'none') {
+            checkLogin();
+        }
+    }
+    // التكبير والتصغير الموحد لكل شيء في الصفحة (لأنه بيغير الـ Root Font Size)
+    function adjustTextSize(step) {
+        currentBaseSize += step * 2;
+        if (currentBaseSize < 12) currentBaseSize = 12;
+        if (currentBaseSize > 24) currentBaseSize = 24;
+        document.documentElement.style.fontSize = currentBaseSize + 'px';
+    }
+
+    function toggleTheme() {
+        document.body.classList.toggle('dark-theme');
+    }
+
+    window.onload = () => {
+        const savedUser = localStorage.getItem('crm_user'), savedPass = localStorage.getItem('crm_pass');
+        if(savedUser && savedPass) {
+            document.getElementById('username').value = savedUser;
+            document.getElementById('password').value = savedPass;
+            document.getElementById('remember').checked = true;
+        }
+    };
+
+    function toggleComparisonMode() {
+        isComparisonMode = !isComparisonMode;
+        const btn = document.getElementById('mode-toggle-btn');
+        const singleUI = document.getElementById('single-month-ui');
+        const compareUI = document.getElementById('comparison-month-ui');
+        const indicator = document.getElementById('mode-indicator');
+        const tableCard = document.getElementById('table-card');
+
+        for(let i=1; i<=12; i++) { if(document.getElementById('comp-m'+i)) document.getElementById('comp-m'+i).value = ""; }
+        if(myChart) myChart.destroy();
+
+        if (isComparisonMode) {
+            btn.innerText = "🔙 العودة للوضع العادي";
+            singleUI.style.display = "none"; compareUI.style.display = "block";
+            indicator.innerText = "مقارنة متعددة"; tableCard.style.display = "none";
+        } else {
+            btn.innerText = "🔄 وضع المقارنة";
+            singleUI.style.display = "block"; compareUI.style.display = "none";
+            indicator.innerText = "عرض شهر واحد"; tableCard.style.display = "flex";
+            updateCurrentMonth();
+        }
+    }
+
+    function checkLogin() {
+        const user = document.getElementById('username').value, pass = document.getElementById('password').value, remember = document.getElementById('remember').checked;
+        if (users[user] && users[user] === pass) {
+            remember ? (localStorage.setItem('crm_user', user), localStorage.setItem('crm_pass', pass)) : (localStorage.removeItem('crm_user'), localStorage.removeItem('crm_pass'));
+            showDashboard(user);
+        } else {
+            document.getElementById('login-error').style.display = 'block';
+        }
+    }
+
+    function showDashboard(user) {
+        document.getElementById('login-page').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        document.getElementById('welcome-msg').innerText = "📌 م/ " + user;
+        loadData(document.querySelector('.nav-item'), 'Sales', 'line');
+    }
+
+    function logout() { location.reload(); }
+
+    function updateCurrentMonth() {
+        if(isComparisonMode) return;
+        const activeItem = document.querySelector('.nav-item.active');
+        if (activeItem) {
+            const match = activeItem.getAttribute('onclick').match(/'([^']+)'/);
+            if (match) loadData(activeItem, match[1], currentChartType);
+        }
+    }
+
+  async function loadData(element, rangeName, chartType) {
+    currentRangeName = rangeName;
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    element.classList.add('active');
+    currentLabel = element.innerText;
+    currentChartType = chartType;
+    isAreaEnabled = false; specificOptions = { indexAxis: 'x' };
+
+    if (isComparisonMode) { triggerComparison(); return; }
+
+    const loading = document.getElementById('loading');
+    loading.style.display = 'block';
+    let selectedMonth = document.getElementById('month-selector').value;
+
+    try {
+        const response = await fetch(`${scriptURL}?month=${selectedMonth}&rangeName=${rangeName}`);
+        const data = await response.json();
+        
+        cleanDuplicateRow(data); // <--- تنظيف السطر المكرر
+        setCustomHeaders(data, rangeName); // ضبط المسميات
+        
+        currentData = data; 
+        renderTable(data, currentLabel + " - " + selectedMonth, 'table-head', 'table-body');
+        createColorPickers(data);
+        renderChart(data, currentChartType, currentLabel);
+    } catch (err) { console.error(err); } 
+    finally { loading.style.display = 'none'; }
+}
+
+    function triggerComparison() {
+        const selectedMonths = [];
+        for(let i=1; i<=12; i++) {
+            const val = document.getElementById('comp-m'+i).value;
+            if(val) selectedMonths.push(val);
+        }
+        if (selectedMonths.length > 0) compareMonths(selectedMonths); 
+        else if (myChart) myChart.destroy();
+    }
+
+   async function compareMonths(monthsArray) {
+    document.getElementById('loading').style.display = 'block';
+    try {
+        const promises = monthsArray.map(m => fetch(`${scriptURL}?month=${m}&rangeName=${currentRangeName}`).then(r => r.json()));
+        const results = await Promise.all(promises);
+        
+        // تنظيف السطر المكرر من كل شهور المقارنة
+        results.forEach(monthData => cleanDuplicateRow(monthData));
+
+        currentCompData = { results, months: monthsArray };
+        renderComparisonChart(results, monthsArray, currentChartType);
+    } catch (err) { console.error(err); }
+    finally { document.getElementById('loading').style.display = 'none'; }
+}
+
+    function renderComparisonChart(results, months, type) {
+    const ctx = document.getElementById('myChart').getContext('2d');
+    if (myChart) myChart.destroy();
+    
+    const firstValidData = results.find(d => d !== null);
+    if (!firstValidData) return;
+    
+    // 1. المسميات تحت الشارت هتفضل زي ما هي (أسماء القطاعات أو البنود)
+    const labels = firstValidData.slice(1).map(row => row[1]);
+    
+    // 2. سحب ألوان القطاعات (كل قطاع يحتفظ بلونه الخاص اللي إنت محدده)
+    const sectorColors = labels.map((_, i) => 
+        (savedColors[currentRangeName] && savedColors[currentRangeName][i]) 
+            ? savedColors[currentRangeName][i] 
+            : fixedPalette[i % fixedPalette.length].color
+    );
+
+    // 3. بناء البيانات لكل شهر
+    const datasets = results.map((data, index) => {
+        if(!data) return null;
+        
+        return {
+            label: 'شهر ' + months[index],
+            data: data.slice(1).map(row => parseFloat(String(row[row.length - 1]).replace(/,/g, '').replace('%','')) || 0),
+            // التعديل هنا: كل شهر بياخد نفس مصفوفة الألوان الخاصة بالقطاعات
+            backgroundColor: isAreaEnabled ? sectorColors.map(c => c + '44') : sectorColors,
+            borderColor: sectorColors, 
+            borderWidth: 2, 
+            tension: 0.4,
+            fill: isAreaEnabled || (type !== 'line' && type !== 'radar')
+        };
+    }).filter(ds => ds !== null);
+
+    myChart = new Chart(ctx, {
+        type: (type === 'pie' || type === 'polarArea') ? 'doughnut' : type,
+        data: { labels: labels, datasets: datasets },
+        options: { 
+            indexAxis: specificOptions.indexAxis, 
+            responsive: true, 
+            maintainAspectRatio: false,
+            plugins: { 
+                datalabels: { 
+                    display: (type !== 'radar' && type !== 'polarArea'), 
+                    anchor: 'end', 
+                    align: 'top', 
+                    font: { weight: 'bold', size: 10 } 
+                },
+                legend: { display: true, position: 'top' }
+            },
+            scales: (type === 'pie' || type === 'radar' || type === 'polarArea') ? {} : { y: { beginAtZero: true, grace: '25%' } }
+        }
+    });
+    document.getElementById('chart-title').innerText = "مقارنة: " + currentLabel;
+}
+
+    function renderChart(data, type, label) {
+        const ctx = document.getElementById('myChart').getContext('2d');
+        if (myChart) myChart.destroy();
+        const labels = data.slice(1).map(row => row[1]); 
+        const isTargetTable = (currentRangeName === 'Target' && data[0].length >= 4);
+
+        let chartConfig = {
+            type: type, data: { labels: labels, datasets: [] },
+            options: { 
+                indexAxis: specificOptions.indexAxis, responsive: true, maintainAspectRatio: false,
+                plugins: { 
+                    datalabels: { 
+                        anchor: 'end', align: 'top', font: { weight: 'bold', size: 11 }, display: true,
+                        formatter: (val, ctx) => { return isTargetTable ? data[ctx.dataIndex + 1][ctx.datasetIndex + 2] : data[ctx.dataIndex + 1][data[0].length - 1]; }
+                    } 
+                },
+                scales: (type === 'radar' || type === 'pie' || type === 'polarArea') ? {} : { y: { beginAtZero: true, grace: '25%' }, x: { ticks: { font: { size: 12, weight: 'bold' } } } }
+            }
+        };
+
+        if (isTargetTable) {
+            const actualValues = data.slice(1).map(row => parseFloat(String(row[2]).replace(/,/g, '').replace('%','')) || 0);
+            const targetValues = data.slice(1).map(row => parseFloat(String(row[3]).replace(/,/g, '').replace('%','')) || 0);
+            chartConfig.type = (type === 'line' || type === 'bar' || type === 'horizontalBar') ? type : 'bar';
+            chartConfig.data.datasets = [
+                { label: 'المحقق', data: actualValues, backgroundColor: '#2ecc71', borderColor: '#27ae60', borderWidth: 1 },
+                { label: 'المستهدف', data: targetValues, backgroundColor: '#e74c3c', borderColor: '#c0392b', borderWidth: 1 }
+            ];
+        } else {
+            const values = data.slice(1).map(row => parseFloat(String(row[row.length - 1]).replace(/,/g, '').replace('%','')) || 0); 
+            const bgColors = labels.map((_, i) => (savedColors[currentRangeName] && savedColors[currentRangeName][i]) ? savedColors[currentRangeName][i] : fixedPalette[i % 10].color);
+            chartConfig.data.datasets = [{
+                label: 'الأداء الرقمي', data: values,
+                backgroundColor: type === 'line' ? (isAreaEnabled ? bgColors[0] + '44' : 'transparent') : bgColors,
+                borderColor: bgColors[0], borderWidth: 2, tension: 0.4, 
+                fill: isAreaEnabled || (type !== 'line' && type !== 'radar')
+            }];
+        }
+        myChart = new Chart(ctx, chartConfig);
+        document.getElementById('chart-title').innerText = label;
+    }
+
+    function changeChartType(newType, areaMode = false) { 
+        isAreaEnabled = areaMode;
+        if (newType === 'horizontalBar') { currentChartType = 'bar'; specificOptions.indexAxis = 'y'; } 
+        else { currentChartType = newType; specificOptions.indexAxis = 'x'; }
+        
+        if (isComparisonMode && currentCompData) renderComparisonChart(currentCompData.results, currentCompData.months, currentChartType);
+        else if (currentData) renderChart(currentData, currentChartType, currentLabel);
+    }
+
+    // دالة موحدة لرسم الجداول لضمان تطابق الأكواد
+    function renderTable(data, title, headId, bodyId) {
+        const headerRow = data[0];
+        document.getElementById(headId).innerHTML = `<tr><th colspan="${headerRow.length}" class="table-main-title">${title}</th></tr><tr class="column-headers">${headerRow.map((h, i) => `<th class="${i===0?'col-m':i===1?'col-desc':'col-data'}">${h}</th>`).join('')}</tr>`;
+        document.getElementById(bodyId).innerHTML = data.slice(1).map(row => `<tr>${row.map((cell, i) => `<td class="${i===0?'col-m':i===1?'col-desc':'col-data'}">${cell}</td>`).join('')}</tr>`).join('');
+    }
+
+    function createColorPickers(data) {
+        const container = document.getElementById('color-customizer');
+        container.innerHTML = '';
+        data.slice(1).forEach((row, index) => {
+            const activeColor = (savedColors[currentRangeName] && savedColors[currentRangeName][index]) ? savedColors[currentRangeName][index] : fixedPalette[index % 10].color;
+            let optionsHtml = fixedPalette.map(p => `<option value="${p.color}" ${p.color === activeColor ? 'selected' : ''}>${p.name}</option>`).join('');
+            container.innerHTML += `<select class="color-select" onchange="updateBarColor(${index}, this.value)" style="border-bottom: 2px solid ${activeColor};">${optionsHtml}</select>`;
+        });
+    }
+
+    function updateBarColor(index, newColor) {
+        if (!savedColors[currentRangeName]) savedColors[currentRangeName] = {};
+        savedColors[currentRangeName][index] = newColor;
+        localStorage.setItem('crm_saved_colors', JSON.stringify(savedColors));
+        if (!isComparisonMode) renderChart(currentData, currentChartType, currentLabel);
+    }
+
+// متغيرات لتخزين بيانات ورسومات كل شاشة بشكل مستقل
+let paneCharts = {}; 
+let paneDataObj = {};
+let paneChartTypes = {};
+let paneAreaEnabled = {};
+let paneLastRange = {};
+let paneSpecificOptions = {};
+
+// دالة فتح النافذة
+function openSummaryPopup() {
+    document.getElementById('summary-popup').style.display = 'flex';
+    // لو الحاوية فاضية، هينشئ شاشة واحدة كوضع افتراضي
+    if(document.getElementById('multi-panes-container').innerHTML.trim() === '') {
+        document.getElementById('sum-mode').value = "1";
+        changePopupMode();
+    }
+}
+
+// دالة توليد الشاشات بناءً على العدد المختار من القائمة
+function changePopupMode() {
+    const count = parseInt(document.getElementById('sum-mode').value) || 1;
+    const container = document.getElementById('multi-panes-container');
+    
+    container.className = 'popup-grid grid-' + count;
+    container.innerHTML = ''; 
+    
+    // مسح الشارتس القديمة من الذاكرة لمنع أي تداخل
+    for (let key in paneCharts) {
+        if (paneCharts[key]) paneCharts[key].destroy();
+    }
+    paneCharts = {};
+    paneDataObj = {};
+
+    // القوائم المنسدلة الافتراضية
+    const monthsOptions = `<option value="Jan">يناير</option><option value="Feb">فبراير</option><option value="Mar">مارس</option><option value="Apr">أبريل</option><option value="May">مايو</option><option value="Jun">يونيو</option><option value="Jul">يوليو</option><option value="Aug">أغسطس</option><option value="Sep">سبتمبر</option><option value="Oct">أكتوبر</option><option value="Nov">نوفمبر</option><option value="Dec">ديسمبر</option>`;
+    const rangeOptions = `<option value="Sales">📈 تحميلات القطاعات</option><option value="CallCenter">📞 Call Center</option><option value="Satisfaction">😊 مدي رضاء العميل</option><option value="Returns">🔄 المرتجعات</option><option value="Service">🛠 Service Level</option><option value="Orders">📦 طلبيات تم تفعيلها</option><option value="MostComplaints">⚠️ الأكثر شكوى</option><option value="Complaints">📋 Complaints</option><option value="Target">🎯 المحقق والمستهدف</option>`;
+
+    for (let i = 1; i <= count; i++) {
+        paneChartTypes[i] = 'bar'; // النوع الافتراضي
+        paneAreaEnabled[i] = false;
+        paneSpecificOptions[i] = { indexAxis: 'x' };
+
+        // بناء الشاشة المستقلة بالـ IDs المخصصة
+        const paneHTML = `
+            <div class="report-pane" id="pane-${i}">
+                <div class="pane-independent-controls">
+                    <select id="sum-range-${i}">${rangeOptions}</select>
+                    <select id="sum-start-${i}">${monthsOptions}</select>
+                    <select id="sum-end-${i}">${monthsOptions}</select>
+                    <button onclick="calculatePaneData(${i})">تجميع</button>
+                </div>
+                <div id="popup-loading-${i}" style="display:none; text-align:center; color:#3498db; font-weight:bold; font-size:1rem; padding:0.6rem;">🔄 جاري التجميع...</div>
+                <div class="pane-body">
+                    <div class="pane-table-wrapper">
+                        <table style="width: 100%; border-collapse: collapse; table-layout: fixed;">
+                            <thead id="popup-table-head-${i}"></thead>
+                            <tbody id="popup-table-body-${i}"></tbody>
+                        </table>
+                    </div>
+                    <div id="popup-chart-controls-${i}" class="popup-controls-row" style="display:none; gap: 0.3rem; justify-content: center; flex-wrap: wrap; margin-top:0.5rem;">
+                        <button onclick="changePaneChartType(${i}, 'line')">📈 خطي</button>
+                        <button onclick="changePaneChartType(${i}, 'line', true)">🏔️ مساحي</button>
+                        <button onclick="changePaneChartType(${i}, 'bar')">📊 عمودي</button>
+                        <button onclick="changePaneChartType(${i}, 'horizontalBar')">📉 أفقي</button>
+                        <button onclick="changePaneChartType(${i}, 'pie')">🍕 دائري</button>
+                        <button onclick="changePaneChartType(${i}, 'polarArea')">🧭 قطبي</button>
+                        <button onclick="changePaneChartType(${i}, 'radar')">🕸️ عنكبوتي</button>
+                    </div>
+                    <div class="pane-chart-wrapper" id="popup-chart-wrapper-${i}">
+                        <canvas id="popupChart-${i}"></canvas>
+                    </div>
+                </div>
+            </div>
+        `;
+        container.insertAdjacentHTML('beforeend', paneHTML);
+    }
+}
+
+// دالة جلب البيانات وتجميعها للشاشة المحددة فقط
+async function calculatePaneData(paneId) {
+    const range = document.getElementById(`sum-range-${paneId}`).value;
+    const start = document.getElementById(`sum-start-${paneId}`).value;
+    const end = document.getElementById(`sum-end-${paneId}`).value;
+    const loading = document.getElementById(`popup-loading-${paneId}`);
+
+    const allMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const startIndex = allMonths.indexOf(start);
+    const endIndex = allMonths.indexOf(end);
+    
+    if(startIndex > endIndex) { alert("خطأ: شهر البداية يجب أن يكون قبل النهاية"); return; }
+    
+    const selectedMonths = allMonths.slice(startIndex, endIndex + 1);
+    loading.style.display = 'block';
+    
+    document.getElementById(`popup-table-head-${paneId}`).innerHTML = "";
+    document.getElementById(`popup-table-body-${paneId}`).innerHTML = "";
+    document.getElementById(`popup-chart-controls-${paneId}`).style.display = 'none';
+
+    try {
+        const promises = selectedMonths.map(m => fetch(`${scriptURL}?month=${m}&rangeName=${range}`).then(r => r.json()));
+        const results = await Promise.all(promises);
+
+        results.forEach(monthData => cleanDuplicateRow(monthData));
+
+        let collectiveData = JSON.parse(JSON.stringify(results.find(r => r !== null))); 
+        if(!collectiveData) { alert("لا توجد بيانات لهذا النطاق"); return; }
+
+        for(let r=1; r < collectiveData.length; r++) { for(let c=2; c < collectiveData[r].length; c++) collectiveData[r][c] = 0; }
+
+        results.forEach(monthData => {
+            if(!monthData) return;
+            for(let r=1; r < monthData.length; r++) {
+                for(let c=2; c < monthData[r].length; c++) {
+                    let val = parseFloat(String(monthData[r][c]).replace('%','').replace(/,/g, '')) || 0;
+                    collectiveData[r][c] += val;
+                }
+            }
+        });
+
+        setCustomHeaders(collectiveData, range);
+
+        paneDataObj[paneId] = JSON.parse(JSON.stringify(collectiveData)); 
+        paneLastRange[paneId] = range;
+
+        const baseData = results.find(res => res !== null);
+        for(let r=1; r < collectiveData.length; r++) {
+            for(let c=2; c < collectiveData[r].length; c++) {
+                if(String(baseData[r][c]).includes('%')) {
+                   collectiveData[r][c] = (collectiveData[r][c] / selectedMonths.length).toFixed(1) + "%";
+                   paneDataObj[paneId][r][c] = (paneDataObj[paneId][r][c] / selectedMonths.length);
+                } else {
+                   collectiveData[r][c] = Math.round(collectiveData[r][c]).toLocaleString();
+                }
+            }
+        }
+        
+        renderTable(collectiveData, `الفترة: ${start} إلى ${end}`, `popup-table-head-${paneId}`, `popup-table-body-${paneId}`);
+        document.getElementById(`popup-chart-controls-${paneId}`).style.display = 'flex';
+        renderPaneChart(paneId);
+
+    } catch (err) { console.error(err); alert("خطأ في الاتصال بالسحابة"); }
+    finally { loading.style.display = 'none'; }
+}
+
+// دالة تغيير نوع الرسم البياني للشاشة المحددة فقط
+function changePaneChartType(paneId, newType, areaMode = false) {
+    paneAreaEnabled[paneId] = areaMode;
+    if (newType === 'horizontalBar') { 
+        paneChartTypes[paneId] = 'bar'; 
+        paneSpecificOptions[paneId].indexAxis = 'y'; 
+    } else { 
+        paneChartTypes[paneId] = newType; 
+        paneSpecificOptions[paneId].indexAxis = 'x'; 
+    }
+    if (paneDataObj[paneId]) renderPaneChart(paneId);
+}
+
+// دالة بناء الرسم البياني (Chart)
+function renderPaneChart(paneId) {
+    const canvas = document.getElementById(`popupChart-${paneId}`);
+    if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (paneCharts[paneId]) paneCharts[paneId].destroy();
+    
+    const data = paneDataObj[paneId];
+    const range = paneLastRange[paneId];
+    const type = paneChartTypes[paneId];
+    const isArea = paneAreaEnabled[paneId];
+    const specOptions = paneSpecificOptions[paneId];
+
+    const labels = data.slice(1).map(row => row[1]);
+    const isTargetTable = (range === 'Target' && data[0].length >= 4);
+    
+    let datasets = [];
+    const dynamicColors = labels.map((_, i) => fixedPalette[i % fixedPalette.length].color);
+    
+    if (isTargetTable) {
+        const actualValues = data.slice(1).map(row => parseFloat(row[2]) || 0);
+        const targetValues = data.slice(1).map(row => parseFloat(row[3]) || 0);
+        let finalType = (type === 'line' || type === 'bar' || type === 'horizontalBar') ? type : 'bar';
+        datasets = [
+            { label: 'إجمالي المحقق', data: actualValues, backgroundColor: '#2ecc71', borderColor: '#27ae60', borderWidth: 1 },
+            { label: 'إجمالي المستهدف', data: targetValues, backgroundColor: '#e74c3c', borderColor: '#c0392b', borderWidth: 1 }
+        ];
+        paneChartTypes[paneId] = finalType; 
+    } else {
+        const values = data.slice(1).map(row => parseFloat(row[row.length - 1]) || 0);
+        datasets = [{
+            label: 'الإجمالي',
+            data: values,
+            backgroundColor: (type === 'line' && !isArea) ? 'transparent' : dynamicColors,
+            borderColor: type === 'line' ? dynamicColors[0] : dynamicColors,
+            borderWidth: 2, tension: 0.4,
+            fill: isArea || (type !== 'line' && type !== 'radar')
+        }];
+    }
+    
+    paneCharts[paneId] = new Chart(ctx, {
+        type: paneChartTypes[paneId],
+        data: { labels: labels, datasets: datasets },
+        options: {
+            indexAxis: specOptions.indexAxis,
+            responsive: true, maintainAspectRatio: false,
+            plugins: { 
+                legend: { display: true },
+                datalabels: { 
+                    display: (paneChartTypes[paneId] !== 'radar' && paneChartTypes[paneId] !== 'polarArea'),
+                    anchor: 'end', align: 'top', font: { weight: 'bold', size: 10 },
+                    formatter: (val, ctx) => { return isTargetTable ? data[ctx.dataIndex + 1][ctx.datasetIndex + 2] : data[ctx.dataIndex + 1][data[0].length - 1]; }
+                }
+            },
+            scales: (paneChartTypes[paneId] === 'pie' || paneChartTypes[paneId] === 'radar' || paneChartTypes[paneId] === 'polarArea') ? {} : { y: { beginAtZero: true, grace: '25%' }, x: { ticks: { font: { size: 11, weight: 'bold' } } } }
+        }
+    });
+}
+
+// --- منطق التقارير التراكمية المجمعة المتطابق ---
+    async function calculateCollectiveData() {
+        const range = document.getElementById('sum-range').value;
+        const start = document.getElementById('sum-start').value;
+        const end = document.getElementById('sum-end').value;
+        const loading = document.getElementById('popup-loading');
+
+        const allMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const startIndex = allMonths.indexOf(start);
+        const endIndex = allMonths.indexOf(end);
+        
+        if(startIndex > endIndex) { alert("خطأ: شهر البداية يجب أن يكون قبل النهاية"); return; }
+        
+        const selectedMonths = allMonths.slice(startIndex, endIndex + 1);
+        loading.style.display = 'block';
+        
+        document.getElementById('popup-table-head').innerHTML = "";
+        document.getElementById('popup-table-body').innerHTML = "";
+        document.getElementById('popup-chart-wrapper').style.display = 'none';
+        document.getElementById('popup-chart-controls').style.display = 'none';
+
+        try {
+            const promises = selectedMonths.map(m => fetch(`${scriptURL}?month=${m}&rangeName=${range}`).then(r => r.json()));
+            const results = await Promise.all(promises);
+
+            // <--- تنظيف كل الشهور من السطر المكرر قبل الجمع --->
+            results.forEach(monthData => cleanDuplicateRow(monthData));
+
+            let collectiveData = JSON.parse(JSON.stringify(results.find(r => r !== null))); 
+            if(!collectiveData) { alert("لا توجد بيانات لهذا النطاق"); return; }
+
+            for(let r=1; r < collectiveData.length; r++) { for(let c=2; c < collectiveData[r].length; c++) collectiveData[r][c] = 0; }
+
+            results.forEach(monthData => {
+                if(!monthData) return;
+                for(let r=1; r < monthData.length; r++) {
+                    for(let c=2; c < monthData[r].length; c++) {
+                        let val = parseFloat(String(monthData[r][c]).replace('%','').replace(/,/g, '')) || 0;
+                        collectiveData[r][c] += val;
+                    }
+                }
+            });
+
+            setCustomHeaders(collectiveData, range);
+
+            lastPopupData = JSON.parse(JSON.stringify(collectiveData)); 
+            lastPopupRange = range;
+
+            const baseData = results.find(res => res !== null);
+            for(let r=1; r < collectiveData.length; r++) {
+                for(let c=2; c < collectiveData[r].length; c++) {
+                    if(String(baseData[r][c]).includes('%')) {
+                       collectiveData[r][c] = (collectiveData[r][c] / selectedMonths.length).toFixed(1) + "%";
+                       lastPopupData[r][c] = (lastPopupData[r][c] / selectedMonths.length);
+                    } else {
+                       collectiveData[r][c] = Math.round(collectiveData[r][c]).toLocaleString();
+                    }
+                }
+            }
+            
+            renderTable(collectiveData, `التجميع: من ${start} إلى ${end}`, 'popup-table-head', 'popup-table-body');
+            document.getElementById('popup-chart-controls').style.display = 'flex';
+            renderPopupChart();
+
+        } catch (err) { console.error(err); alert("خطأ في الاتصال بالسحابة"); }
+        finally { loading.style.display = 'none'; }
+    }
+
+    function changePopupChartType(newType, areaMode = false) {
+        popupAreaEnabled = areaMode;
+        if (newType === 'horizontalBar') { popupChartType = 'bar'; popupSpecificOptions.indexAxis = 'y'; } 
+        else { popupChartType = newType; popupSpecificOptions.indexAxis = 'x'; }
+        if (lastPopupData) renderPopupChart();
+    }
+
+    function renderPopupChart() {
+        document.getElementById('popup-chart-wrapper').style.display = 'block';
+        const ctx = document.getElementById('popupChart').getContext('2d');
+        if (popupChartInstance) popupChartInstance.destroy();
+        
+        const labels = lastPopupData.slice(1).map(row => row[1]);
+        const isTargetTable = (lastPopupRange === 'Target' && lastPopupData[0].length >= 4);
+        
+        let datasets = [];
+        const dynamicColors = labels.map((_, i) => fixedPalette[i % fixedPalette.length].color);
+        
+        if (isTargetTable) {
+            const actualValues = lastPopupData.slice(1).map(row => parseFloat(row[2]) || 0);
+            const targetValues = lastPopupData.slice(1).map(row => parseFloat(row[3]) || 0);
+            let finalType = (popupChartType === 'line' || popupChartType === 'bar' || popupChartType === 'horizontalBar') ? popupChartType : 'bar';
+            datasets = [
+                { label: 'إجمالي المحقق', data: actualValues, backgroundColor: '#2ecc71', borderColor: '#27ae60', borderWidth: 1 },
+                { label: 'إجمالي المستهدف', data: targetValues, backgroundColor: '#e74c3c', borderColor: '#c0392b', borderWidth: 1 }
+            ];
+            popupChartType = finalType; 
+        } else {
+            const values = lastPopupData.slice(1).map(row => parseFloat(row[row.length - 1]) || 0);
+            datasets = [{
+                label: 'الإجمالي التراكمي',
+                data: values,
+                backgroundColor: (popupChartType === 'line' && !popupAreaEnabled) ? 'transparent' : dynamicColors,
+                borderColor: popupChartType === 'line' ? dynamicColors[0] : dynamicColors,
+                borderWidth: 2, tension: 0.4,
+                fill: popupAreaEnabled || (popupChartType !== 'line' && popupChartType !== 'radar')
+            }];
+        }
+        
+        popupChartInstance = new Chart(ctx, {
+            type: popupChartType,
+            data: { labels: labels, datasets: datasets },
+            options: {
+                indexAxis: popupSpecificOptions.indexAxis,
+                responsive: true, maintainAspectRatio: false,
+                plugins: { 
+                    legend: { display: true },
+                    // تفعيل الأرقام على شارت التقارير المجمعة لتتطابق مع الرئيسية
+                    datalabels: { 
+                        display: (popupChartType !== 'radar' && popupChartType !== 'polarArea'),
+                        anchor: 'end', align: 'top', font: { weight: 'bold', size: 10 },
+                        formatter: (val, ctx) => { return isTargetTable ? lastPopupData[ctx.dataIndex + 1][ctx.datasetIndex + 2] : lastPopupData[ctx.dataIndex + 1][lastPopupData[0].length - 1]; }
+                    }
+                },
+                scales: (popupChartType === 'pie' || popupChartType === 'radar' || popupChartType === 'polarArea') ? {} : { y: { beginAtZero: true, grace: '25%' }, x: { ticks: { font: { size: 11, weight: 'bold' } } } }
+            }
+        });
+    }
+
+    function setCustomHeaders(data, rangeName) {
+    if (!data || !data[0]) return;
+    
+    // العمود الأول والثاني دائماً ثابتين
+    data[0][0] = "م";
+    data[0][1] = "البيان";
+
+    // تغيير اسم العمود الثالث والرابع بناءً على نوع التقرير
+    if (rangeName === 'Target') {
+        data[0][2] = "إجمالي المحقق";
+        if (data[0].length > 3) data[0][3] = "إجمالي المستهدف";
+    } 
+    else if (rangeName === 'Sales') {
+        data[0][2] = "الكمية بالطن";
+    } 
+    else if (rangeName === 'Satisfaction') {
+        data[0][2] = "النسبة %";
+    } 
+    else if (rangeName === 'CallCenter') {
+        data[0][2] = "العدد";
+    } 
+    else {
+        // القيمة الافتراضية لأي تقرير آخر لم يتم تحديده
+        data[0][2] = "القيمة / العدد"; 
+    }
+}
+
+// دالة لاكتشاف وحذف الصف المكرر أو الفرعي من الذاكرة قبل الرسم
+function cleanDuplicateRow(dataArray) {
+    if (dataArray && dataArray.length > 1) {
+        const col0 = String(dataArray[1][0]).trim();
+        const col1 = String(dataArray[1][1]).trim();
+        // لو الصف التاني بيحتوي على "م" أو "البيان" هيتم حذفه من العرض
+        if (col0 === 'م' || col1.includes('البيان') || col1.includes('البيــــان')) {
+            dataArray.splice(1, 1);
+        }
+    }
+}
+
+</script>
+</body>
+</html>
